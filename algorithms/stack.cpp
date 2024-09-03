@@ -74,7 +74,7 @@ int main(){
     cout << "Max capacity of the stack: ";
     cin >> max;
 
-    Stack stk(5);
+    Stack stk(max);
 
     cout << "Peek:" << endl;
     stk.peek();
@@ -85,14 +85,15 @@ int main(){
     cout << "Push: 9" << endl;
     stk.push(9);
 
-    cout << "Peek:" << endl;
-    stk.peek();
     
     cout << "Push: 4" << endl;
     stk.push(4);
 
     cout << "Push: 2" << endl;
     stk.push(2);
+
+    cout << "Peek:" << endl;
+    stk.peek();
 
     cout << "Push: 3" << endl;
     stk.push(3);
