@@ -4,6 +4,7 @@
         "iostream": "cpp",
         "cmath": "cpp",
         "iosfwd": "cpp",
-        "fstream": "cpp"
+        "fstream": "cpp",
+        "unordered_set": "cpp"
     }
 }
