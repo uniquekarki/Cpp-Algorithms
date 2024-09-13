@@ -5,6 +5,7 @@
 #include <cstdlib>
 #include <algorithm>
 #include <unordered_set>
+#include <random>
 
 using namespace std;
 
@@ -132,13 +133,13 @@ pair<vector<int>, unordered_set<int>> greedy_search(
 
 vector<vector<int>> robust_prune(
     const int p,
+    unordered_set<int> V,
     const float alpha,
     const int R,
     const vector<vector<float>> &P,
     vector<vector<int>> &G
 ){
     vector<int> N_out_p;
-    vector<int> V = G[p];
 
     if (V.empty()) {
         // If V is empty, just return the current state of G
@@ -178,4 +179,88 @@ vector<vector<int>> robust_prune(
     G[p] = N_out_p;
     return G;
 
+};
+
+vector<vector<int>> vamana(
+    const vector<vector<float>> &P,
+    const int R,
+    const int L_size,
+    const float alpha
+){
+    vector<vector<int>> G = create_graph(P, R);
+    vector<float> s = calc_medoid(P);
+
+    cout << "Initial Graph:\n";
+    for (const auto &row: G) {
+        for (const auto &elem: row){
+            cout << elem << " ";
+        };
+        cout << endl;
+    };
+    cout << endl;
+
+    vector<int> perm_list; 
+    for(int i = 0; i < P.size(); i++){
+        perm_list.push_back(i);
+    };
+
+    // Shuffle the nodes
+    random_device rd; 
+    mt19937 g(rd());     
+    shuffle(perm_list.begin(), perm_list.end(), g);
+
+    for(const auto &i: perm_list){
+        vector<float> xq = P[i];
+
+        // Greedy search from medoid to p[i]
+        pair<vector<int>, unordered_set<int>> result = greedy_search(P, G, s, xq, 1, L_size);
+
+        // Extract the nearest k elements and the set of visited nodes from the result
+        int nearest_neighbor = result.first[0];
+        unordered_set<int> visited_nodes = result.second;
+
+        cout << "Nearest neighbor of " << xq[0] <<", " << xq[1] << "is " << nearest_neighbor << endl;
+        cout << "Visisted Nodes to get to the NN: ";
+        for(const auto &l: visited_nodes){
+            cout << l << " ";
+        };
+        cout << endl;
+
+
+        G = robust_prune(i, visited_nodes, alpha, R, P, G);
+
+        cout << "Loop Graph:\n";
+        cout << i << endl;
+        for (const auto &row: G) {
+            for (const auto &elem: row){
+                cout << elem << " ";
+            };
+            cout << endl;
+        };
+        cout << endl;
+
+        for (const auto &j: G[i]){
+            if ((G[j].size() + 1) > R){
+                unordered_set<int> visited_nodes_j;
+                for (const auto &elem: G[j]){
+                    visited_nodes_j.insert(elem);
+                };
+                visited_nodes_j.insert(i);
+                G = robust_prune(j, visited_nodes_j, alpha, R, P, G);
+            }
+            else if (find(G[j].begin(), G[j].end(), i) == G[j].end()) {
+                G[j].push_back(i);
+            };
+        };
+
+
+    };
+    cout << "Final Graph:\n";
+    for (const auto &row: G) {
+        for (const auto &elem: row){
+            cout << elem << " ";
+        };
+    };
+    cout << endl;
+    return G;
 };
