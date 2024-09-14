@@ -75,6 +75,12 @@ pair<vector<int>, unordered_set<int>> greedy_search(
     // Initialization
     vector<int> L = {get_index(P, s)};
     unordered_set<int> V;
+    int xq_idx = get_index(P, xq);
+
+    // Ensure xq is not in the initial list
+    if (L[0] == xq_idx) {
+        L.clear(); // Clear L if it mistakenly starts with xq
+    };
 
     float mindist = numeric_limits<float>::max();
     int minNode;
@@ -82,7 +88,7 @@ pair<vector<int>, unordered_set<int>> greedy_search(
     while(true){
         bool has_unvisited = false;
         for (const auto &elem: L){
-            if(V.find(elem) == V.end()){
+            if(V.find(elem) == V.end() && elem != xq_idx){  // Skip xq in unvisited check
                 has_unvisited = true;
 
                 break; // Looped over all elements in L. If any elem is not in V the loop is broken to tell that at least one elem is unvisited
@@ -99,8 +105,8 @@ pair<vector<int>, unordered_set<int>> greedy_search(
 
         // Gets the min distance element from L \ V and sets it as p*
         for(const auto &elem: L){
-            if(V.find(elem) == V.end()){
-                float distance = euclideanDistance(P[elem],xq);
+            if(V.find(elem) == V.end() && elem != xq_idx){  // Skip xq in min distance search
+                float distance = euclideanDistance(P[elem], xq);
                 if(distance < mindist){
                     mindist = distance;
                     p_star = elem;
@@ -109,7 +115,7 @@ pair<vector<int>, unordered_set<int>> greedy_search(
         };
 
         for(const auto &out: G[p_star]){
-            if(V.find(out) == V.end() && find(L.begin(), L.end(), out) == L.end()){
+            if(V.find(out) == V.end() && find(L.begin(), L.end(), out) == L.end() && out != xq_idx){  // Skip xq in neighbors
                 L.push_back(out);
             };
         };
@@ -139,6 +145,19 @@ vector<vector<int>> robust_prune(
     const vector<vector<float>> &P,
     vector<vector<int>> &G
 ){
+    cout << "Pruning: " << p << endl;
+    cout << "Set of candidated out of which edges are selected:\n";
+    for (const auto &elem: V) {
+        cout << elem << " " ;
+    };
+    cout << endl;
+
+    cout << "Initial out neighbors of: " << p << " are:\n";
+    for (const auto &elem: G[p]) {
+        cout << elem << " " ;
+    };
+    cout << endl;
+
     vector<int> N_out_p;
 
     if (V.empty()) {
@@ -168,7 +187,7 @@ vector<vector<int>> robust_prune(
         float dist_p_star = euclideanDistance(P[p_star], P[elem]);
         float dist_p = euclideanDistance(P[p], P[elem]);
 
-        if (alpha * dist_p_star >= dist_p) {
+        if (alpha * dist_p_star >= dist_p && find(N_out_p.begin(), N_out_p.end(), elem) == N_out_p.end()) {
             N_out_p.push_back(elem);
             if (N_out_p.size() == R) {
                 break;
@@ -177,6 +196,14 @@ vector<vector<int>> robust_prune(
     };
 
     G[p] = N_out_p;
+
+    cout << "Final out neighbors of: " << p << " are:\n";
+    for (const auto &elem: G[p]) {
+        cout << elem << " " ;
+    };
+    cout << endl;
+    cout << endl;
+    
     return G;
 
 };
@@ -187,17 +214,8 @@ vector<vector<int>> vamana(
     const int L_size,
     const float alpha
 ){
-    vector<vector<int>> G = create_graph(P, R);
+    vector<vector<int>> G = create_graph(P, 5);
     vector<float> s = calc_medoid(P);
-
-    cout << "Initial Graph:\n";
-    for (const auto &row: G) {
-        for (const auto &elem: row){
-            cout << elem << " ";
-        };
-        cout << endl;
-    };
-    cout << endl;
 
     vector<int> perm_list; 
     for(int i = 0; i < P.size(); i++){
@@ -219,27 +237,10 @@ vector<vector<int>> vamana(
         int nearest_neighbor = result.first[0];
         unordered_set<int> visited_nodes = result.second;
 
-        cout << "Nearest neighbor of " << xq[0] <<", " << xq[1] << "is " << nearest_neighbor << endl;
-        cout << "Visisted Nodes to get to the NN: ";
-        for(const auto &l: visited_nodes){
-            cout << l << " ";
-        };
-        cout << endl;
-
-
         G = robust_prune(i, visited_nodes, alpha, R, P, G);
 
-        cout << "Loop Graph:\n";
-        cout << i << endl;
-        for (const auto &row: G) {
-            for (const auto &elem: row){
-                cout << elem << " ";
-            };
-            cout << endl;
-        };
-        cout << endl;
-
         for (const auto &j: G[i]){
+            cout << "Checking neighbor of " << i << " = " << j << endl;
             if ((G[j].size() + 1) > R){
                 unordered_set<int> visited_nodes_j;
                 for (const auto &elem: G[j]){
@@ -253,14 +254,7 @@ vector<vector<int>> vamana(
             };
         };
 
+    };
 
-    };
-    cout << "Final Graph:\n";
-    for (const auto &row: G) {
-        for (const auto &elem: row){
-            cout << elem << " ";
-        };
-    };
-    cout << endl;
     return G;
 };
