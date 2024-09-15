@@ -215,7 +215,16 @@ vector<vector<int>> vamana(
     const float alpha
 ){
     vector<vector<int>> G = create_graph(P, 5);
+    cout << "Initial Graph: \n";
+    for (const auto &row: G){
+        for (const auto &elem: row){
+            cout << elem << " ";
+        };
+        cout << endl;
+    };
     vector<float> s = calc_medoid(P);
+
+    cout << "Medoid: " << s[0] << " " << s[1] << endl;
 
     vector<int> perm_list; 
     for(int i = 0; i < P.size(); i++){
@@ -227,8 +236,19 @@ vector<vector<int>> vamana(
     mt19937 g(rd());     
     shuffle(perm_list.begin(), perm_list.end(), g);
 
-    for(const auto &i: perm_list){
+    cout << "The medoid is in position = 4" <<endl;
+    cout << "Perm list: ";
+    for (int q: perm_list) {
+        cout << q << " ";
+    };
+    cout << endl;
+
+    for(int i: perm_list){
         vector<float> xq = P[i];
+
+        if (xq == s){
+            continue;
+        };
 
         // Greedy search from medoid to p[i]
         pair<vector<int>, unordered_set<int>> result = greedy_search(P, G, s, xq, 1, L_size);
@@ -239,8 +259,15 @@ vector<vector<int>> vamana(
 
         G = robust_prune(i, visited_nodes, alpha, R, P, G);
 
-        for (const auto &j: G[i]){
-            cout << "Checking neighbor of " << i << " = " << j << endl;
+        vector<int> i_edge;
+        for (const int x: G[i]){
+            i_edge.push_back(x);
+        };
+
+        for (const int j: i_edge){
+            
+            cout << "Checking neighbor of " << i << " which is: " << j << endl;
+
             if ((G[j].size() + 1) > R){
                 unordered_set<int> visited_nodes_j;
                 for (const auto &elem: G[j]){
@@ -253,6 +280,7 @@ vector<vector<int>> vamana(
                 G[j].push_back(i);
             };
         };
+        cout << endl << endl;
 
     };
 
